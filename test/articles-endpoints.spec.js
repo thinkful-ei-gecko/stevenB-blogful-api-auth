@@ -5,6 +5,11 @@ const helpers = require('./test-helpers');
 describe('Articles Endpoints', function() {
   let db;
 
+  function makeAuthHeader(user) {
+    const token = Buffer.from(`${user.user_name}:${user.user_password}`).toString('base64');
+    return `Basic ${token}`;
+  }
+
   const {
     testUsers,
     testArticles,
@@ -104,12 +109,13 @@ describe('Articles Endpoints', function() {
     });
   });
 
-  describe('GET /api/articles/:article_id', () => {
+  describe.only('GET /api/articles/:article_id', () => {
     context('Given no articles', () => {
       it('responds with 404', () => {
         const articleId = 123456;
         return supertest(app)
           .get(`/api/articles/${articleId}`)
+          .set('Authorization', makeAuthHeader(testUsers[0]))
           .expect(404, { error: 'Article doesn\'t exist' });
       });
     });
@@ -134,6 +140,7 @@ describe('Articles Endpoints', function() {
 
         return supertest(app)
           .get(`/api/articles/${articleId}`)
+          .set('Authorization', makeAuthHeader(testUsers[0]))
           .expect(200, expectedArticle);
       });
     });
@@ -156,6 +163,7 @@ describe('Articles Endpoints', function() {
       it('removes XSS attack content', () => {
         return supertest(app)
           .get(`/api/articles/${maliciousArticle.id}`)
+          .set('Authorization', makeAuthHeader(testUsers[0]))
           .expect(200)
           .expect(res => {
             expect(res.body.title).to.eql(expectedArticle.title);
