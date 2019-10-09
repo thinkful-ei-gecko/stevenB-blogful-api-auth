@@ -25,6 +25,25 @@ describe('Articles Endpoints', function() {
 
   afterEach('cleanup', () => helpers.cleanTables(db));
 
+  describe.only('Protected endpoints', () => {
+    beforeEach('insert Articles', () => {
+      helpers.seedArticlesTables(
+        db,
+        testUsers,
+        testArticles,
+        testComments
+      );
+    });
+
+    describe('GET /api/articles/:article_id', () => {
+      it('responds with 401 \'Missing basic token\' when no basic token', () => {
+        return supertest(app)
+          .get('/api/articles/123')
+          .expect(401, { error: 'Missing basic token' });
+      });
+    });
+  });
+
   describe('GET /api/articles', () => {
     context('Given no articles', () => {
       it('responds with 200 and an empty list', () => {
