@@ -6,7 +6,7 @@ describe('Articles Endpoints', function() {
   let db;
 
   function makeAuthHeader(user) {
-    const token = Buffer.from(`${user.user_name}:${user.user_password}`).toString('base64');
+    const token = Buffer.from(`${user.user_name}:${user.password}`).toString('base64');
     return `Basic ${token}`;
   }
 
@@ -45,6 +45,14 @@ describe('Articles Endpoints', function() {
         return supertest(app)
           .get('/api/articles/123')
           .expect(401, { error: 'Missing basic token' });
+      });
+
+      it('responds 401 \'Unauthorized Request\' when no credentials', () => {
+        const userNoCreds = [{ user_name: '', password: '' }];
+        return supertest(app) 
+          .get('/api/articles/123')
+          .set('Authorization', makeAuthHeader(userNoCreds))
+          .expect(401, { error: 'Unauthorized request' })
       });
     });
   });
@@ -163,7 +171,7 @@ describe('Articles Endpoints', function() {
       it('removes XSS attack content', () => {
         return supertest(app)
           .get(`/api/articles/${maliciousArticle.id}`)
-          .set('Authorization', makeAuthHeader(testUsers[0]))
+          .set('Authorization', makeAuthHeader(testUser))
           .expect(200)
           .expect(res => {
             expect(res.body.title).to.eql(expectedArticle.title);
